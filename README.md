@@ -2,17 +2,11 @@
 
 ![CI](https://github.com/skylerblue333/Py-Data-Pipeline/workflows/CI/badge.svg)
 
-Production-ready backend service for pipeline operations.
-
-## Architecture
-- **API Framework**: FastAPI
-- **Concurrency**: Asyncio event loop
-- **Testing**: Pytest with 100% coverage
-- **Deployment**: Docker containerized
+Data transformation and routing pipeline built with FastAPI.
 
 ## Quick Start
 ```bash
 pip install -r requirements.txt
-pytest tests/ -v
+pytest tests/
 uvicorn src.main:app --reload
 ```
