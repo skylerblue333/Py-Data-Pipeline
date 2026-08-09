@@ -1,13 +1,5 @@
 node_modules/
 dist/
-build/
-*.log
 .env
-.env.local
 .DS_Store
-.vscode/
-.idea/
-*.swp
-*.swo
-coverage/
-.nyc_output/
+*.log
