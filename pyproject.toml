@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "skycoin-data-pipeline"
+version = "0.1.0"
+description = "Reusable deterministic ETL primitives for the SKYCOIN4444 ecosystem"
+requires-python = ">=3.11"
+dependencies = [
+  "prefect>=3.0,<4",
+  "pandas>=2.2,<3",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8,<9"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
