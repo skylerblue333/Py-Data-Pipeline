@@ -6,9 +6,10 @@ import json
 import os
 import re
 import tempfile
+from collections.abc import Iterable
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 import pandas as pd
 
@@ -141,7 +142,7 @@ def run_file(input_path: str | Path, output_path: str | Path, manifest_path: str
     result = transform(input_records, policy)
     output = Path(output_path)
     manifest = Path(manifest_path)
-    signature = hashlib.sha256(f"{result.input_digest}:{policy_digest(policy)}".encode("utf-8")).hexdigest()
+    signature = hashlib.sha256(f"{result.input_digest}:{policy_digest(policy)}".encode()).hexdigest()
 
     if manifest.exists() and output.exists():
         try:
