@@ -1,89 +1,89 @@
-# Py Data Pipeline
+# Sky DataFlow
 
-Reusable Python ETL/data-processing component for the **SKYCOIN4444** ecosystem. The implementation deliberately builds on established open-source primitives—**Pandas** for tabular processing and **Prefect** for orchestration—instead of recreating commodity infrastructure.
+Sky DataFlow is a deterministic batch ETL component for the **SKYCOIN4444** engineering ecosystem. It builds on Pandas and Prefect rather than reimplementing dataframe or orchestration infrastructure.
 
-## Current execution surface
+## Verified product scope
 
-- Prefect-managed `skycoin-data-pipeline` flow
-- Record loading from Python dictionaries into Pandas DataFrames
-- deterministic column normalization
-- composable DataFrame transform chain
-- null-row filtering
-- copy-on-transform behavior to avoid accidental input mutation
-- row-count accounting
-- runtime validation that transforms return DataFrames
-- executable pytest coverage for core transforms
-- reproducible Python project metadata
-- GitHub Actions CI on Python 3.11 and 3.12
-- minimal Docker runtime
+- deterministic column normalization with collision detection
+- required-column validation
+- bounded row-count policies
+- null-row filtering and key-based deduplication
+- composable copy-on-transform DataFrame steps
+- stable SHA-256 input/output digests
+- JSONL ingestion with line-numbered malformed-input failures
+- atomic JSONL output replacement
+- atomic run-manifest persistence
+- safe replay detection when input digest and policy are unchanged
+- Prefect-managed in-memory flow for programmatic composition
+- Python 3.11/3.12 verification
+- Ruff, pytest, `pip-audit`, Docker build, and non-root CI gates
+- non-root container with `/data` persistence boundary
 
 ## Quick start
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-python -m pip install -r requirements.txt
-python -m pytest
-python pipeline.py
+pip install -e '.[test]'
+pytest
 ```
 
-Windows PowerShell activation:
-
-```powershell
-.venv\Scripts\Activate.ps1
-```
-
-## Example
+### Programmatic use
 
 ```python
-from pipeline import run_pipeline
+from pipeline import PipelinePolicy, process_records
 
-records = [{" Customer Name ": "Sky", "Amount": 10}]
-result = run_pipeline(records)
-print(result)
+records = [
+    {"Customer ID": 1, "Amount": 10},
+    {"Customer ID": 1, "Amount": 20},
+]
+policy = PipelinePolicy(
+    required_columns=("customer_id", "amount"),
+    dedupe_keys=("customer_id",),
+)
+result = process_records(records, policy)
+print(result.rows_in, result.rows_out, result.output_digest)
 ```
 
-The deterministic normalization step produces keys such as `customer_name` and `amount`.
+### Durable JSONL job
 
-## Verification
+```python
+from pipeline import PipelinePolicy, run_jsonl_job
 
-CI performs dependency installation, Python compilation, and the pytest suite on every push and pull request. The repository does **not** claim production readiness merely because CI exists.
+result = run_jsonl_job(
+    "input.jsonl",
+    "output.jsonl",
+    "run-manifest.json",
+    PipelinePolicy(required_columns=("id",), dedupe_keys=("id",)),
+)
+print(result.status)
+```
 
-Current verified scope is the in-memory ETL foundation. Production connectors, durable storage, schema contracts, lineage, distributed scheduling, observability, secrets management, and deployed-environment evidence remain separate work.
+A second invocation with the same normalized input and policy returns `replayed` when the prior output and manifest still exist.
 
-## Ecosystem boundary
+## Integrity model
 
-**SKYCOIN4444 → Data / Analytics → downstream AI, reporting, market-data, and platform services**
+Digests and manifests provide deterministic run evidence and accidental-change detection. They are **not digital signatures** and do not make an untrusted filesystem tamper-proof. Atomic replacement prevents readers from observing a partially written output file on a normal local filesystem.
 
-The component is intentionally small and reusable so it can later be composed into a larger workspace without pretending that unimplemented infrastructure already exists.
+## Product boundary
 
-## Environment
+This release is a focused **single-process batch ETL engine**. It does not claim Spark-scale distributed compute, Airflow/Prefect-server HA, transactional database sinks, exactly-once distributed delivery, object-store connectors, streaming semantics, schema-registry compatibility, or regulatory certification.
 
-See `.env.example`. The current pipeline does not require credentials or external services.
+Production operators remain responsible for input trust boundaries, filesystem permissions, storage durability, backup, secrets, observability, and deployment architecture.
 
 ## Container
 
 ```bash
-docker build -t skycoin-data-pipeline .
-docker run --rm skycoin-data-pipeline
+docker build -t sky-dataflow .
+docker run --rm sky-dataflow
 ```
+
+The image runs as an unprivileged user. Mount `/data` when using file-based jobs.
 
 ## Open-source foundation
 
-Pandas and Prefect provide the commodity dataframe and orchestration layers. Their licenses and all other third-party dependency notices must be preserved in downstream distributions.
+Pandas supplies tabular transformations and Prefect supplies orchestration primitives. Downstream distributions must preserve applicable third-party licenses and notices.
 
-## Production checklist
+## Repository role
 
-- [ ] durable database/object-store connector
-- [ ] schema validation and versioning
-- [ ] retry and dead-letter semantics
-- [ ] incremental/idempotent loading
-- [ ] data-quality assertions
-- [ ] OpenTelemetry traces/metrics
-- [ ] production secrets integration
-- [ ] integration/load tests against real backends
-- [ ] deployed staging environment
-
-## License
-
-See the checked-in repository license and applicable third-party dependency licenses.
+Sky DataFlow is product #12 in the standalone-product master plan. It remains independently testable and deployable while providing a clean future data boundary for Sky Analytics, HopeAI, commerce, finance, and reporting applications.
